@@ -1,0 +1,162 @@
+# Data Quality Report
+
+## Dataset 1: Chess Games
+
+### Shape
+
+* Rows: 20,058
+* Columns: 17 (raw dataset)
+
+### Data Quality Checks
+
+#### Duplicate Move Sequences
+
+Duplicate move sequences were identified by checking the `moves` column.
+
+#### Suspiciously Short Games
+
+The minimum number of turns was 1. A total of 18 games had only one turn, which is unusual for a chess game and may indicate immediate resignation, timeout, or invalid records.
+
+#### Missing Values
+
+The `opening_response` column contained approximately 94% missing values.
+
+### Cleaning Decisions
+
+#### Parsed Time Controls
+
+The `time_increment` column was split into:
+
+* `time_base`
+* `time_inc`
+
+Reason:
+The original format (e.g., `10+5`) was stored as text and could not be analyzed numerically.
+
+#### Created Rating Difference
+
+A new feature called `rating_diff` was created:
+
+```text
+rating_diff = white_rating - black_rating
+```
+
+Reason:
+This allows analysis of rating advantage and game outcomes.
+
+#### Extracted Opening Family
+
+The first part of `opening_fullname` was extracted into a new column called `opening_family`.
+
+Example:
+
+```text
+Sicilian Defense: Najdorf Variation
+↓
+Sicilian Defense
+```
+
+Reason:
+Reduces the number of unique categories and simplifies analysis.
+
+#### Removed High-Null Column
+
+The `opening_response` column was dropped.
+
+Reason:
+Approximately 94% of values were missing, making the column unsuitable for analysis.
+
+#### Flagged Suspicious Games
+
+A new column called `is_suspicious` was added.
+
+```text
+is_suspicious = turns < 5
+```
+
+Result:
+342 games were flagged as suspicious.
+
+Reason:
+Very short games often represent resignations, abandoned games, or invalid records.
+
+### Validation
+
+* No missing values in `rating_diff`.
+* No duplicate rows after cleaning.
+
+### Key Findings
+
+* Higher-rated players won approximately 64.6% of non-draw games.
+* 227 unique opening families were identified.
+* White wins: 10,001
+* Black wins: 9,107
+* Draws: 950
+
+---
+
+## Dataset 2: Player Registry
+
+### Shape
+
+The registry dataset was merged with the chess dataset using the `white_id` field.
+
+### Data Quality Checks
+
+#### Missing Registry Matches
+
+After merging:
+
+* 15,899 game records had no matching registry entry.
+* 9,251 unique white players had no registry entry.
+
+#### Country Name Inconsistencies
+
+Several countries appeared under multiple names.
+
+Examples:
+
+```text
+US, USA, United States
+GB, UK, United Kingdom
+Russia, RUS, russian federation
+Brazil, BRA
+Ukraine, UA
+```
+
+### Cleaning Decisions
+
+#### Standardized Country Names
+
+Country aliases were mapped to a single standardized form.
+
+Examples:
+
+```text
+US → United States
+USA → United States
+GB → United Kingdom
+RUS → Russia
+BRA → Brazil
+UA → Ukraine
+```
+
+Reason:
+Ensures accurate grouping and reporting by country.
+
+#### Removed Duplicate Registry Entries
+
+Duplicate usernames were removed where necessary.
+
+Reason:
+Each player should appear only once in the registry.
+
+### Validation
+
+* Country names standardized.
+* Registry prepared for merging and country-level analysis.
+
+### Key Findings
+
+* More than 6 country-name inconsistencies were identified.
+* After standardization, the data was reduced to 10 clean country categories.
