@@ -1,4 +1,5 @@
 def clean_chess(df):
+    df = df.copy()
 
     df[['time_base', 'time_inc']] = (
         df['time_increment']
@@ -23,5 +24,36 @@ def clean_chess(df):
     df['is_suspicious'] = (
         df['turns'] < 5
     )
+    df = df.drop_duplicates()
+    # Validation
+    assert df['rating_diff'].notna().all()
+    assert df.duplicated().sum() == 0
+
+    return df
+
+def clean_registry(df):
+    df = df.copy()
+
+    # Clean column names
+    df.columns = (
+        df.columns
+        .str.strip()
+        .str.lower()
+    )
+
+    # Clean usernames
+    df['username'] = (
+        df['username']
+        .str.strip()
+    )
+
+    # Clean country names
+    df['country'] = (
+        df['country']
+        .str.strip()
+    )
+
+    # Remove duplicate usernames
+    df = df.drop_duplicates(subset=['username'])
 
     return df
